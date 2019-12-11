@@ -2,7 +2,8 @@ package router
 
 import (
 	"fmt"
-	"strings"
+	"log"
+	"net"
 
 	"github.com/codinmoldovanu/mikrotik_auto_ssl/models"
 	"gopkg.in/routeros.v2"
@@ -23,19 +24,42 @@ func TestConnection() bool {
 	c, err := dial()
 	if err != nil {
 		fmt.Print(err.Error())
+		log.Fatal("Connecting failed.")
 	}
 	defer c.Close()
 
-	r, err := c.RunArgs(strings.Split("/system/resource/print", " "))
+	localIP := GetOutboundIP()
+
+	r, err := c.Run("/ip/firewall/nat/print", "?to-ports=80", "?disabled=false")
 	if err != nil {
 		fmt.Print(err.Error())
 	}
 
-	// fmt.Print(r)
+	for _, rule := range r.Re {
+		if rule.List[3].Value == localIP.String() {
+			fmt.Print("A NAT rule to this place already exists.")
+
+		}
+	}
 
 	if r != nil {
 		fmt.Print("Connection to router is successful.")
 		return true
 	}
 	return false
+}
+
+// Solution stolen from Marcel Molina @ https://stackoverflow.com/a/37382208
+// Get preferred outbound ip of this machine
+func GetOutboundIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	fmt.Print(localAddr.IP)
+	return localAddr.IP
 }
