@@ -35,6 +35,7 @@ func TestConnection() bool {
 		fmt.Print(err.Error())
 	}
 
+	//This is here temporarily for testing.
 	for _, rule := range r.Re {
 		if rule.List[3].Value == localIP.String() {
 			fmt.Print("A NAT rule to this place already exists.")
