@@ -58,6 +58,10 @@ func RequestRouterInfo() models.RouterInfo {
 		Mask:  '*',
 	}
 
+	// promptDomain := promptui.Prompt{
+	// 	Label: ("Enter the domain for which the SSL cert will be generated:"),
+	// }
+
 	ipAddress, err := promptIP.Run()
 
 	port, err := promptPort.Run()
@@ -65,6 +69,8 @@ func RequestRouterInfo() models.RouterInfo {
 	username, err := promptUsername.Run()
 
 	password, err := promptPassword.Run()
+
+	// domain, err := promptDomain.Run()
 
 	if err != nil {
 		fmt.Printf("something went wrong %v", err)
