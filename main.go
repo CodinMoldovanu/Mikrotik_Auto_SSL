@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"os/exec"
 
 	"github.com/codinmoldovanu/mikrotik_auto_ssl/cli"
 	"github.com/codinmoldovanu/mikrotik_auto_ssl/models"
@@ -24,6 +25,16 @@ func main() {
 		routerInfo.Password = os.Getenv("PASSWORD")
 	}
 	router.Assign(routerInfo)
-	router.TestConnection()
-	router.GetOutboundIP()
+	// router.TestConnection()
+	if !router.NATRuleCheck() {
+		router.CreateNAT()
+	}
+
+	cmd := exec.Command("/usr/bin/certbot", "certonly", "--manual")
+	out, err := cmd.Output()
+	if err == nil {
+		println(string(out))
+	} else {
+		println(err.Error())
+	}
 }

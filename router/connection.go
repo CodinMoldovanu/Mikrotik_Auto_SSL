@@ -22,6 +22,17 @@ func dial() (*routeros.Client, error) {
 
 func TestConnection() bool {
 
+	c, err := dial()
+	if err != nil {
+		fmt.Print(err.Error())
+		log.Fatal("Connecting failed.")
+	}
+	defer c.Close()
+	fmt.Print("Connection successfull.")
+	return true
+}
+
+func NATRuleCheck() bool {
 	exists := false
 	c, err := dial()
 	if err != nil {
@@ -32,11 +43,6 @@ func TestConnection() bool {
 
 	localIP := GetOutboundIP()
 
-	// r, err := c.Run("/ip/firewall/nat/ print to-ports=\"80\"?disabled=true")
-	// if err != nil {
-	// 	fmt.Print(err.Error())
-	// }
-
 	r, err := c.RunArgs(strings.Split("/ip/firewall/nat/print?to-ports=\"80\"?disabled=false", "?"))
 	if err != nil {
 		fmt.Print(err.Error())
@@ -45,52 +51,28 @@ func TestConnection() bool {
 	for _, rule := range r.Re {
 
 		if rule.Tag == "to-addresses" && rule.List[3].Value == localIP.String() {
-			fmt.Print("A NAT rule to this place already exists.")
-			// fmt.Print(rule.List[3])
+			fmt.Print("A NAT rule to this place already exists, enabling it.")
 			fmt.Print(c.Run("/ip/firewall/nat", "?enable="+rule.List[0].Value))
 			exists = true
 			break
 		}
 	}
-
-	if !exists {
-		fmt.Print("Nothing exists, creating one.")
-		n, err := c.Run("/ip/firewall/nat/print", "?add", "?chain=dstnat", "?action=dst-nat", "?to-addresses="+localIP.String(), "?to-ports=80", "?protocol=tcp", "?in-interface=RDS_1Gbps", "?dst-port=80", "?log=yes")
-		fmt.Print(n)
-		if err != nil {
-			log.Fatal(n)
-		}
-	}
-
-	if r != nil {
-		fmt.Print("Connection to router is successful.")
-		return true
-	}
-	return false
+	return exists
 }
 
-func NATRuleCheck() bool {
+func CreateNAT() error {
+	localIP := GetOutboundIP()
 	c, err := dial()
 	if err != nil {
 		fmt.Print(err.Error())
 		log.Fatal("Connecting failed.")
 	}
-	defer c.Close()
-
-	localIP := GetOutboundIP()
-
-	// r, err := c.Run("/ip/firewall/nat/ print to-ports=\"80\"?disabled=true")
-	// if err != nil {
-	// 	fmt.Print(err.Error())
-	// }
-
-	r, err := c.RunArgs(strings.Split("/ip/firewall/nat/print?to-ports=\"80\"?to-addresses="+localIP.To16().String()+"?disabled=false", "?"))
+	n, err := c.Run("/ip/firewall/nat/print", "?add", "?chain=dstnat", "?action=dst-nat", "?to-addresses="+localIP.String(), "?to-ports=80", "?protocol=tcp", "?in-interface=RDS_1Gbps", "?dst-port=80", "?log=yes")
+	fmt.Print(n)
 	if err != nil {
-		fmt.Print(err.Error())
+		log.Fatal(n)
 	}
-
-	fmt.Println(r)
-	return true
+	return err
 }
 
 // Solution stolen from Marcel Molina @ https://stackoverflow.com/a/37382208

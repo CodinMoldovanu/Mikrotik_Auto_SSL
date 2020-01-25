@@ -10,6 +10,16 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
+// func RequestTOS() bool {
+// 	promptTOS := promptui.Prompt{
+// 		Label: "Do you accept the TOS of the CA? Y/n",
+// 	}
+// 	// if promptTOS == "Y" {
+// 		return true
+// 	}
+// 	return false
+// }
+
 func RequestRouterInfo() models.RouterInfo {
 
 	validateIPv4 := func(ip string) error {
