@@ -22,6 +22,7 @@ func dial() (*routeros.Client, error) {
 
 func TestConnection() bool {
 
+	exists := false
 	c, err := dial()
 	if err != nil {
 		fmt.Print(err.Error())
@@ -40,21 +41,24 @@ func TestConnection() bool {
 	if err != nil {
 		fmt.Print(err.Error())
 	}
-
+	// fmt.Print(r.Re)
 	for _, rule := range r.Re {
-		fmt.Print(rule.String())
-		if rule.List[3].Value == localIP.String() {
+
+		if rule.Tag == "to-addresses" && rule.List[3].Value == localIP.String() {
 			fmt.Print("A NAT rule to this place already exists.")
+			// fmt.Print(rule.List[3])
 			fmt.Print(c.Run("/ip/firewall/nat", "?enable="+rule.List[0].Value))
+			exists = true
 			break
-		} else {
-			fmt.Print("Creating a new NAT rule.")
-			n, err := c.Run("/ip/firewall/nat/print", "?add", "?chain=dstnat", "?action=dst-nat", "?to-addresses="+localIP.String(), "?to-ports=80", "?protocol=tcp", "?in-interface=RDS_1Gbps", "?dst-port=80", "?log=yes")
-			fmt.Print(n)
-			if err != nil {
-				log.Fatal(n)
-			}
-			break
+		}
+	}
+
+	if !exists {
+		fmt.Print("Nothing exists, creating one.")
+		n, err := c.Run("/ip/firewall/nat/print", "?add", "?chain=dstnat", "?action=dst-nat", "?to-addresses="+localIP.String(), "?to-ports=80", "?protocol=tcp", "?in-interface=RDS_1Gbps", "?dst-port=80", "?log=yes")
+		fmt.Print(n)
+		if err != nil {
+			log.Fatal(n)
 		}
 	}
 
@@ -85,6 +89,8 @@ func NATRuleCheck() bool {
 		fmt.Print(err.Error())
 	}
 
+	fmt.Println(r)
+	return true
 }
 
 // Solution stolen from Marcel Molina @ https://stackoverflow.com/a/37382208

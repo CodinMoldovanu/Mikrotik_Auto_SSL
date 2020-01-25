@@ -17,7 +17,7 @@ func main() {
 		routerInfo = cli.RequestRouterInfo()
 
 	} else {
-		log.Print(".env file found, asking for credentials")
+		log.Print(".env file found, not asking for credentials")
 		routerInfo.IPAddress = os.Getenv("IP")
 		routerInfo.Port = os.Getenv("PORT")
 		routerInfo.Username = os.Getenv("USERNAME")
