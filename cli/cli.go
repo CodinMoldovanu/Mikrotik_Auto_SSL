@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -68,10 +69,6 @@ func RequestRouterInfo() models.RouterInfo {
 		Mask:  '*',
 	}
 
-	// promptDomain := promptui.Prompt{
-	// 	Label: ("Enter the domain for which the SSL cert will be generated:"),
-	// }
-
 	ipAddress, err := promptIP.Run()
 
 	port, err := promptPort.Run()
@@ -79,8 +76,6 @@ func RequestRouterInfo() models.RouterInfo {
 	username, err := promptUsername.Run()
 
 	password, err := promptPassword.Run()
-
-	// domain, err := promptDomain.Run()
 
 	if err != nil {
 		fmt.Printf("something went wrong %v", err)
@@ -93,4 +88,29 @@ func RequestRouterInfo() models.RouterInfo {
 	routerInf.Password = password
 
 	return routerInf
+}
+
+func RequestHostname() string {
+	promptDomain := promptui.Prompt{
+		Label: ("Enter the domain for which the SSL cert will be generated:"),
+	}
+
+	domain, err := promptDomain.Run()
+	if err != nil {
+		log.Fatal("Error at hostname input")
+	}
+
+	return domain
+}
+
+func RequestEmail() string {
+	promptEmail := promptui.Prompt{
+		Label: ("Enter your email account for important account notifications:"),
+	}
+
+	email, err := promptEmail.Run()
+	if err != nil {
+		log.Fatal("Error at email input")
+	}
+	return email
 }

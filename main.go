@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -26,15 +27,16 @@ func main() {
 	}
 	router.Assign(routerInfo)
 	// router.TestConnection()
+	fmt.Print("Checking existing NAT rules or creating others...")
 	if !router.NATRuleCheck() {
+		fmt.Print("Creating NAT rule...")
 		router.CreateNAT()
 	}
 
-	cmd := exec.Command("/usr/bin/certbot", "certonly", "--manual")
-	out, err := cmd.Output()
-	if err == nil {
-		println(string(out))
-	} else {
-		println(err.Error())
-	}
+	hostname := cli.RequestHostname()
+	email := cli.RequestEmail()
+
+	cert := exec.Command("sudo certbot certonly --standalone --preferred-challenges http -d " + hostname + "  --agree-tos -m" + email)
+	fmt.Print(cert.CombinedOutput())
+
 }
