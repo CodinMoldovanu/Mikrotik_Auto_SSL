@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strings"
 
 	"github.com/codinmoldovanu/mikrotik_auto_ssl/models"
 	"gopkg.in/routeros.v2"
@@ -23,6 +22,7 @@ func dial() (*routeros.Client, error) {
 func TestConnection() bool {
 
 	c, err := dial()
+
 	if err != nil {
 		fmt.Print(err.Error())
 		log.Fatal("Connecting failed.")
@@ -35,28 +35,37 @@ func TestConnection() bool {
 func NATRuleCheck() bool {
 	exists := false
 	c, err := dial()
+	c.Async()
 	if err != nil {
 		fmt.Print(err.Error())
 		log.Fatal("Connecting failed.")
 	}
-	defer c.Close()
 
 	localIP := GetOutboundIP()
 
-	r, err := c.RunArgs(strings.Split("/ip/firewall/nat/print?to-ports=\"80\"?disabled=false", "?"))
+	r, err := c.Run("/ip/firewall/nat/print", "?chain=dstnat", "?to-ports=80", "?to-addresses="+localIP.String())
 	if err != nil {
 		fmt.Print(err.Error())
 	}
-	// fmt.Print(r.Re)
 	for _, rule := range r.Re {
 
-		if rule.Tag == "to-addresses" && rule.List[3].Value == localIP.String() {
-			fmt.Print("A NAT rule to this place already exists, enabling it.")
-			fmt.Print(c.Run("/ip/firewall/nat", "?enable="+rule.List[0].Value))
+		if rule.List[3].Key == "to-addresses" && rule.List[3].Value == localIP.String() && rule.List[len(rule.List)-2].Value == "true" {
+			fmt.Println("A NAT rule to this place already exists, enabling it.")
+			// args := []string{"/ip/firewall/nat/enable", "?number=" + rule.List[0].Value} #this doesn't work like that
+			args := []string{"/ip/firewall/nat/enable", "+find[comment=\"AUTOSSL\"]"}
+			e, err := c.RunArgs(args)
+			if err != nil {
+				log.Printf(err.Error())
+			}
+			log.Print(e.Done.String())
 			exists = true
 			break
 		}
 	}
+
+	fmt.Print(r.Re)
+	defer c.Close()
+	log.Print(exists)
 	return exists
 }
 
@@ -67,11 +76,15 @@ func CreateNAT() error {
 		fmt.Print(err.Error())
 		log.Fatal("Connecting failed.")
 	}
-	n, err := c.Run("/ip/firewall/nat/print", "?add", "?chain=dstnat", "?action=dst-nat", "?to-addresses="+localIP.String(), "?to-ports=80", "?protocol=tcp", "?in-interface=RDS_1Gbps", "?dst-port=80", "?log=yes")
-	fmt.Print(n)
+	args := []string{"/ip/firewall/nat/add", "=chain=dstnat", "=action=dst-nat", "=to-addresses=" + localIP.String(), "=to-ports=80", "=protocol=tcp", "=in-interface=RDS_1GBps", "=dst-port=80", "=log=yes", "=comment=AUTOSSL"}
+
+	n, err := c.RunArgs(args)
 	if err != nil {
-		log.Fatal(n)
+		log.Fatal(err.Error())
 	}
+	n.Done.String()
+	defer c.Close()
+
 	return err
 }
 

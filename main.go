@@ -17,7 +17,6 @@ func main() {
 	err := godotenv.Load()
 	if err != nil {
 		routerInfo = cli.RequestRouterInfo()
-
 	} else {
 		log.Print(".env file found, not asking for credentials")
 		routerInfo.IPAddress = os.Getenv("IP")
@@ -26,17 +25,23 @@ func main() {
 		routerInfo.Password = os.Getenv("PASSWORD")
 	}
 	router.Assign(routerInfo)
-	// router.TestConnection()
+	router.TestConnection()
 	fmt.Print("Checking existing NAT rules or creating others...")
-	if !router.NATRuleCheck() {
-		fmt.Print("Creating NAT rule...")
-		router.CreateNAT()
-	}
+	// if !router.NATRuleCheck() { this needs more work.
+	// 	fmt.Print("Creating NAT rule...")
+	// 	router.CreateNAT()
+	// }
+
+	router.CreateNAT()
 
 	hostname := cli.RequestHostname()
 	email := cli.RequestEmail()
 
-	cert := exec.Command("sudo certbot certonly --standalone --preferred-challenges http -d " + hostname + "  --agree-tos -m" + email)
-	fmt.Print(cert.CombinedOutput())
+	cert := exec.Command("sudo", "certbot", "certonly", "--standalone", "--preferred-challenges", "http", "-d", hostname, "--agree-tos", "-m", email)
+	output, err := cert.CombinedOutput()
+	if err != nil {
+		fmt.Printf(err.Error())
+	}
+	fmt.Printf(string(output))
 
 }
