@@ -11,7 +11,7 @@ This is a simple Go application to create and validate SSL Certificates for any 
 
 
 ### To-Do
-- remove hardcoded WAN-IN name
+???PROFIT
 
 You can hold your sensible information in an `.env` file in the same place as the binary and configure your IP, PORT (for the API), USERNAME, PASSWORD in there:
 ```
