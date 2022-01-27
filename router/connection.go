@@ -10,6 +10,7 @@ import (
 )
 
 var ri models.RouterInfo
+var NATRuleId string
 
 func Assign(rif models.RouterInfo) {
 	ri = rif
@@ -49,24 +50,55 @@ func NATRuleCheck() bool {
 	}
 	for _, rule := range r.Re {
 
-		if rule.List[3].Key == "to-addresses" && rule.List[3].Value == localIP.String() && rule.List[len(rule.List)-2].Value == "true" {
-			fmt.Println("A NAT rule to this place already exists, enabling it.")
-			// args := []string{"/ip/firewall/nat/enable", "?number=" + rule.List[0].Value} #this doesn't work like that
-			args := []string{"/ip/firewall/nat/enable", "+find[comment=\"AUTOSSL\"]"}
-			e, err := c.RunArgs(args)
-			if err != nil {
-				log.Printf(err.Error())
+		if rule.List[3].Key == "to-addresses" && rule.List[3].Value == localIP.String() {
+			fmt.Println("A NAT rule to this place already exists.")
+			NATRuleId = rule.List[0].Value
+			if rule.List[14].Value == "true" {
+				args := []string{"/ip/firewall/nat/enable", "=.id=" + rule.List[0].Value}
+				_, err := c.RunArgs(args)
+				if err != nil {
+					log.Print(err.Error())
+				}
 			}
-			log.Print(e.Done.String())
 			exists = true
 			break
 		}
 	}
 
-	fmt.Print(r.Re)
 	defer c.Close()
-	log.Print(exists)
 	return exists
+}
+
+func DisableNAT() error {
+	c, err := dial()
+	c.Async()
+	if err != nil {
+		log.Fatal("Connecting failed.")
+	}
+
+	localIP := GetOutboundIP()
+
+	r, err := c.Run("/ip/firewall/nat/print", "?chain=dstnat", "?to-ports=80", "?to-addresses="+localIP.String())
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+	for _, rule := range r.Re {
+
+		if rule.List[3].Key == "to-addresses" && rule.List[3].Value == localIP.String() {
+			NATRuleId = rule.List[0].Value
+			if rule.List[14].Value == "true" {
+				args := []string{"/ip/firewall/nat/disable", "=.id=" + rule.List[0].Value}
+				_, err := c.RunArgs(args)
+				if err != nil {
+					log.Print(err.Error())
+				}
+			}
+			break
+		}
+	}
+
+	defer c.Close()
+	return err
 }
 
 func CreateNAT() error {

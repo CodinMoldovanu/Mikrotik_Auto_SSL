@@ -27,12 +27,10 @@ func main() {
 	router.Assign(routerInfo)
 	router.TestConnection()
 	fmt.Print("Checking existing NAT rules or creating others...")
-	// if !router.NATRuleCheck() { this needs more work.
-	// 	fmt.Print("Creating NAT rule...")
-	// 	router.CreateNAT()
-	// }
-
-	router.CreateNAT()
+	if !router.NATRuleCheck() {
+		fmt.Print("Creating NAT rule...")
+		router.CreateNAT()
+	}
 
 	hostname := cli.RequestHostname()
 	email := cli.RequestEmail()
@@ -40,8 +38,10 @@ func main() {
 	cert := exec.Command("sudo", "certbot", "certonly", "--standalone", "--preferred-challenges", "http", "-d", hostname, "--agree-tos", "-m", email)
 	output, err := cert.CombinedOutput()
 	if err != nil {
-		fmt.Printf(err.Error())
+		log.Print(err.Error())
 	}
-	fmt.Printf(string(output))
+	fmt.Print(string(output))
+
+	router.DisableNAT()
 
 }
