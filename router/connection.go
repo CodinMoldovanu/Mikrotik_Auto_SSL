@@ -53,11 +53,13 @@ func NATRuleCheck() bool {
 		if rule.List[3].Key == "to-addresses" && rule.List[3].Value == localIP.String() {
 			fmt.Println("A NAT rule to this place already exists.")
 			NATRuleId = rule.List[0].Value
-			if rule.List[14].Value == "true" {
-				args := []string{"/ip/firewall/nat/enable", "=.id=" + rule.List[0].Value}
-				_, err := c.RunArgs(args)
-				if err != nil {
-					log.Print(err.Error())
+			for _, key := range rule.List {
+				if key.Key == "disabled" && key.Value == "true" {
+					args := []string{"/ip/firewall/nat/enable", "=.id=" + rule.List[0].Value}
+					_, err := c.RunArgs(args)
+					if err != nil {
+						log.Print(err.Error())
+					}
 				}
 			}
 			exists = true
@@ -73,6 +75,7 @@ func DisableNAT() error {
 	c, err := dial()
 	c.Async()
 	if err != nil {
+		fmt.Print(err.Error())
 		log.Fatal("Connecting failed.")
 	}
 
@@ -86,11 +89,13 @@ func DisableNAT() error {
 
 		if rule.List[3].Key == "to-addresses" && rule.List[3].Value == localIP.String() {
 			NATRuleId = rule.List[0].Value
-			if rule.List[14].Value == "true" {
-				args := []string{"/ip/firewall/nat/disable", "=.id=" + rule.List[0].Value}
-				_, err := c.RunArgs(args)
-				if err != nil {
-					log.Print(err.Error())
+			for _, key := range rule.List {
+				if key.Key == "disabled" && key.Value == "false" {
+					args := []string{"/ip/firewall/nat/disable", "=.id=" + NATRuleId}
+					_, err := c.RunArgs(args)
+					if err != nil {
+						log.Print(err.Error())
+					}
 				}
 			}
 			break
@@ -108,7 +113,7 @@ func CreateNAT() error {
 		fmt.Print(err.Error())
 		log.Fatal("Connecting failed.")
 	}
-	args := []string{"/ip/firewall/nat/add", "=chain=dstnat", "=action=dst-nat", "=to-addresses=" + localIP.String(), "=to-ports=80", "=protocol=tcp", "=in-interface=RDS_1GBps", "=dst-port=80", "=log=yes", "=comment=AUTOSSL"}
+	args := []string{"/ip/firewall/nat/add", "=chain=dstnat", "=action=dst-nat", "=to-addresses=" + localIP.String(), "=to-ports=80", "=protocol=tcp", "=in-interface=" + ri.WANIn, "=dst-port=80", "=log=yes", "=comment=AUTOSSL"}
 
 	n, err := c.RunArgs(args)
 	if err != nil {

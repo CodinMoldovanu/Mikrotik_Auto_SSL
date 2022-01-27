@@ -23,6 +23,7 @@ func main() {
 		routerInfo.Port = os.Getenv("PORT")
 		routerInfo.Username = os.Getenv("USERNAME")
 		routerInfo.Password = os.Getenv("PASSWORD")
+		routerInfo.WANIn = os.Getenv("WANIn")
 	}
 	router.Assign(routerInfo)
 	router.TestConnection()

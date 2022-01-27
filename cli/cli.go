@@ -69,6 +69,10 @@ func RequestRouterInfo() models.RouterInfo {
 		Mask:  '*',
 	}
 
+	promptWANin := promptui.Prompt{
+		Label: ("Enter the WAN In Interface name:"),
+	}
+
 	ipAddress, err := promptIP.Run()
 
 	port, err := promptPort.Run()
@@ -76,6 +80,8 @@ func RequestRouterInfo() models.RouterInfo {
 	username, err := promptUsername.Run()
 
 	password, err := promptPassword.Run()
+
+	wanIN, err := promptWANin.Run()
 
 	if err != nil {
 		fmt.Printf("something went wrong %v", err)
@@ -86,7 +92,7 @@ func RequestRouterInfo() models.RouterInfo {
 	routerInf.Port = port
 	routerInf.Username = username
 	routerInf.Password = password
-
+	routerInf.WANIn = wanIN
 	return routerInf
 }
 

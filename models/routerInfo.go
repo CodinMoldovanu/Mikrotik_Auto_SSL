@@ -6,4 +6,5 @@ type RouterInfo struct {
 	Port      string
 	Username  string
 	Password  string
+	WANIn     string
 }
